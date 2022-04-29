@@ -13,7 +13,7 @@ def train(args):
     config = OmegaConf.load(args.cfg)
     if args.exp == "SIFT":
         module = SIFT(
-            **config.train,
+            **config.module,
             **config.env
         )
 
@@ -24,8 +24,9 @@ def train(args):
     checkpoint_callback = ModelCheckpoint(save_top_k=1, monitor="avg_val_reward", mode="max", verbose=True)
 
     trainer = Trainer(
+        max_epochs=config.trainer.epochs,
         deterministic=True,
-        check_val_every_n_epoch=10,
+        check_val_every_n_epoch=config.trainer.val_period,
         logger=logger,
         callbacks=checkpoint_callback
     )

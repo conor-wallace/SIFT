@@ -105,10 +105,7 @@ class BBoxEnv(gym.Env):
 
     def _check_end_state(self):
         iou = self._compute_iou()
-        return torch.tensor(
-            (iou > self.beta) or (self.t == self.episode_length),
-            dtype=torch.uint8
-        )
+        return (iou > self.beta) or (self.t == self.episode_length)
 
     def _compute_iou(self):
         gt_box = Boxes(self.gt["instances"].gt_boxes[self.idx].unsqueeze(0))

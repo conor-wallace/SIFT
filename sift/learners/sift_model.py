@@ -1,4 +1,5 @@
 """SIFT: Search and Inspection for Trustworthy Image Annotations."""
+from tabnanny import verbose
 from typing import Dict, List, Optional, Tuple, Callable
 
 import numpy as np
@@ -45,7 +46,7 @@ class SIFT(LightningModule):
         avg_reward_len: int = 100,
         min_episode_reward: int = -21,
         batches_per_epoch: int = 10000,
-        val_episodes: int = 100,
+        n_val_episodes: int = 100,
         n_steps: int = 1,
         num_workers: int = 1,
         **kwargs,
@@ -97,29 +98,6 @@ class SIFT(LightningModule):
 
         self.automatic_optimization = False
 
-    def run_n_episodes(self, env, n_epsiodes: int = 1) -> List[int]:
-        """Carries out N episodes of the environment with the current agent without exploration.
-        Args:
-            env: environment to use, either train environment or test environment
-            n_epsiodes: number of episodes to run
-        """
-        total_rewards = []
-
-        for _ in range(n_epsiodes):
-            episode_state = env.reset()
-            done = False
-            episode_reward = 0
-
-            while not done:
-                action = self.agent.get_action(episode_state, self.device)
-                next_state, reward, done, _ = env.step(action[0])
-                episode_state = next_state
-                episode_reward += reward
-
-            total_rewards.append(episode_reward)
-
-        return total_rewards
-
     def populate(self, warm_start: int) -> None:
         """Populates the buffer with initial experience."""
         if warm_start > 0:
@@ -128,16 +106,43 @@ class SIFT(LightningModule):
             for _ in tqdm(
                 range(warm_start),
                 total=warm_start,
-                desc="Populating experience buffer..."
+                desc="Populating experience buffer."
             ):
                 action = self.agent(self.state, self.device)
                 next_state, reward, done, _ = self.env.step(action[0])
-                exp = Experience(state=self.state, action=action[0], reward=reward, done=done, new_state=next_state)
+                exp = Experience(
+                    state=self.state.numpy(),
+                    action=action[0],
+                    reward=reward,
+                    done=done,
+                    new_state=next_state.numpy()
+                )
                 self.buffer.append(exp)
                 self.state = next_state
 
                 if done:
                     self.state = self.env.reset()
+
+    def run_n_episodes(self) -> Tensor:
+        """Carries out N episodes of the environment with the current agent without exploration."""
+        total_rewards = []
+
+        for i in range(self.hparams.n_val_episodes):
+            print("Validation Episode #{}".format(i))
+            episode_state = self.env.reset()
+            done = False
+            episode_reward = 0
+
+            while not done:
+                action = self.agent.get_action(episode_state, self.device)
+                next_state, reward, done, _ = self.env.step(action[0])
+                episode_state = next_state
+                episode_reward += reward
+
+            total_rewards.append(episode_reward)
+
+        yield torch.tensor(total_rewards, dtype=torch.float32)
+        _ = self.env.reset()
 
     def generate_batch(
         self,
@@ -153,12 +158,18 @@ class SIFT(LightningModule):
             self.total_steps += 1
             action = self.agent(self.state, self.device)
 
-            next_state, r, is_done, _ = self.env.step(action[0], verbose=False)
+            next_state, reward, is_done, _ = self.env.step(action[0])
 
-            episode_reward += r
+            episode_reward += reward
             episode_steps += 1
 
-            exp = Experience(state=self.state, action=action[0], reward=r, done=is_done, new_state=next_state)
+            exp = Experience(
+                state=self.state.numpy(),
+                action=action[0],
+                reward=reward,
+                done=is_done,
+                new_state=next_state.numpy()
+            )
 
             self.buffer.append(exp)
             self.state = next_state
@@ -281,42 +292,23 @@ class SIFT(LightningModule):
 
         self.log_dict(
             {
-                "total_reward": self.total_rewards[-1],
-                "avg_reward": self.avg_rewards,
-                "policy_loss": policy_loss,
-                "q_loss": q_loss,
-                "episodes": self.done_episodes,
-                "episode_steps": self.total_episode_steps[-1],
+                "total_reward": float(self.total_rewards[-1]),
+                "avg_reward": float(self.avg_rewards),
+                "policy_loss": float(policy_loss),
+                "q_loss": float(q_loss),
+                "episodes": float(self.done_episodes),
+                "episode_steps": float(self.total_episode_steps[-1]),
             }
         )
 
-    def validation_step(self, *args, **kwargs) -> Dict[str, Tensor]:
-        """Evaluate the agent for 100 episodes."""
-        test_reward = self.run_n_episodes(self.env, self.hparams.val_episodes)
-        avg_reward = sum(test_reward) / len(test_reward)
-        return {"val_reward": avg_reward}
+    def validation_step(self, batch: Tuple[List[float]], _) -> Dict[str, Tensor]:
+        """Evaluate the agent for N episodes."""
+        total_val_rewards = batch.clone()
+        avg_val_reward = torch.mean(total_val_rewards)
+        self.log("avg_val_reward", float(avg_val_reward))
+        return {"avg_val_reward": avg_val_reward}
 
-    def validation_epoch_end(self, outputs) -> Dict[str, Tensor]:
-        """Log the avg of the validation results."""
-        rewards = [x["val_reward"] for x in outputs]
-        avg_reward = sum(rewards) / len(rewards)
-        self.log("avg_val_reward", avg_reward)
-        return {"avg_val_reward": avg_reward}
-
-    def test_step(self, *args, **kwargs) -> Dict[str, Tensor]:
-        """Evaluate the agent for 10 episodes."""
-        test_reward = self.run_n_episodes(self.test_env, 1)
-        avg_reward = sum(test_reward) / len(test_reward)
-        return {"test_reward": avg_reward}
-
-    def test_epoch_end(self, outputs) -> Dict[str, Tensor]:
-        """Log the avg of the test results."""
-        rewards = [x["test_reward"] for x in outputs]
-        avg_reward = sum(rewards) / len(rewards)
-        self.log("avg_test_reward", avg_reward)
-        return {"avg_test_reward": avg_reward}
-
-    def _dataloader(self) -> DataLoader:
+    def _train_dataloader(self) -> DataLoader:
         """Initialize the Replay Buffer dataset used for retrieving experiences."""
         self.buffer = MultiStepBuffer(self.hparams.replay_size, self.hparams.n_steps)
         self.populate(self.hparams.warm_start_size)
@@ -327,17 +319,21 @@ class SIFT(LightningModule):
             batch_size=self.hparams.batch_size
         )
 
+    def _val_dataloader(self) -> DataLoader:
+        """Initialize the dataset for collecting validation experiences."""
+        self.val_dataset = ExperienceSourceDataset(self.run_n_episodes)
+        return DataLoader(
+            dataset=self.val_dataset,
+            batch_size=self.hparams.n_val_episodes
+        )
+
     def train_dataloader(self) -> DataLoader:
         """Get train loader."""
-        return self._dataloader()
+        return self._train_dataloader()
 
     def val_dataloader(self) -> DataLoader:
         """Get validation loader."""
-        return self._dataloader()
-
-    def test_dataloader(self) -> DataLoader:
-        """Get test loader."""
-        return self._dataloader()
+        return self._val_dataloader()
 
     def configure_optimizers(self) -> Tuple[Optimizer]:
         """Initialize Adam optimizer."""
@@ -356,7 +352,7 @@ class SIFT(LightningModule):
         image_set: Optional[str] = "train",
         beta: Optional[float] = 0.9
     ) -> Env:
-        """Initialise BAR environment.
+        """Initialise SIFT environment.
 
         Args:
             seed: value to seed the environment RNG for reproducibility

@@ -1,4 +1,8 @@
-train:
+trainer:
+    epochs: 200
+    val_period: 10
+
+module:
     eps: 0.1
     sync_rate: 10
     gamma: 0.99
@@ -6,12 +10,13 @@ train:
     q_learning_rate: 3e-4
     tau: 5e-3
     hidden_size: 500
-    batch_size: 16
+    batch_size: 32
     replay_size: 2000
-    warm_start_size: 100
+    warm_start_size: 1000
     avg_reward_len: 100
     min_episode_reward: -300
-    batches_per_epoch: 10
+    batches_per_epoch: 1000
+    n_val_episodes: 100
     num_workers: 1
     n_steps: 1
 
@@ -27,7 +32,7 @@ env:
         brightness_contrast: 0.0
     corruption_transforms:
         _target_: sift.data.transforms.corruption_transforms
-        scale: 0.25
+        scale: 0.3
         prob: 0.5
     root: "../../Data/VOC/"
     year: "2012"
