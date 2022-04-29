@@ -1,41 +1,36 @@
 train:
-    epochs: 60000
-    batch_size: 16
-    lr: 0.002
-    gamma: 0.99
+    eps: 0.1
     sync_rate: 10
-    policy:
-        eps_last_frame: 1000
-        eps_start: 1.0
-        eps_end: 0.01
+    gamma: 0.99
+    policy_learning_rate: 3e-4
+    q_learning_rate: 3e-4
+    tau: 5e-3
+    hidden_size: 500
+    batch_size: 16
+    replay_size: 2000
+    warm_start_size: 100
+    avg_reward_len: 100
+    min_episode_reward: -300
+    batches_per_epoch: 10
+    num_workers: 1
+    n_steps: 1
 
-data:
-    voc:
-        root: "../../Data/VOC/"
-        year: "2012"
-        image_set: "train"
-        download: False
-    buffer:
-        episode_length: 10
-        replay_size: 1000
-        warm_start_steps: 10
-    transforms:
-        voc_transforms:
-            _target_: rl.data.transforms.voc_transforms
-            image_size: [224, 224]
-            hflip: 0.0
-            vflip: 0.0
-            brightness_contrast: 0.0
-        corruption_transforms:
-            _target_: rl.data.transforms.corruption_transforms
-            scale: 0.3
-
-
-model:
+env:
+    seed: 123
     backbone:
-        _target_: rl.models.backbones.resnet50
-    bar:
-        c: 0.1
-        beta: 0.9
-    sift:
-        beta: 0.9
+        _target_: sift.networks.backbones.resnet50
+    voc_transforms:
+        _target_: sift.data.transforms.voc_transforms
+        image_size: [224, 224]
+        hflip: 0.0
+        vflip: 0.0
+        brightness_contrast: 0.0
+    corruption_transforms:
+        _target_: sift.data.transforms.corruption_transforms
+        scale: 0.25
+        prob: 0.5
+    root: "../../Data/VOC/"
+    year: "2012"
+    image_set: "train"
+    download: False
+    beta: 0.9

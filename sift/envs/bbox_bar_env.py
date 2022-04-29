@@ -21,6 +21,7 @@ class BAREnv(BBoxEnv):
         backbone: nn.Module,
         dataloader: DataLoader,
         episode_length: int,
+        num_actions: int,
         beta: float,
         c: float,
     ) -> None:
@@ -29,10 +30,16 @@ class BAREnv(BBoxEnv):
         self.c1 = c
         self.c2 = c / 2
 
-        self.action_space = gym.spaces.Box(low=0.0, high=1.0, shape=(8,))
+        self.action_space = gym.spaces.Box(
+            low=0.0,
+            high=1.0,
+            shape=(num_actions,)
+        )
         self.action_space.n = self.action_space.shape[0]
 
-        self.history_vector = torch.zeros((self.episode_length, self.action_space.n))
+        self.history_vector = torch.zeros(
+            (self.episode_length, self.action_space.n)
+        )
 
         feature_dims = backbone.model.num_features
         history_dims = self.history_vector.view(-1, 1).shape[0]
@@ -43,37 +50,37 @@ class BAREnv(BBoxEnv):
             shape=(observation_dims,)
         )
 
-    def _perform_action(self, action):
-        image_height = self.ct["image"].shape[0]
-        image_width = self.ct["image"].shape[1]
-        region_height = self.ct["region_image"].shape[0]
-        region_width = self.ct["region_image"].shape[1]
+    def _perform_action(self, action: int):
+        image_height = self.ct["image"].shape[1]
+        image_width = self.ct["image"].shape[2]
+        region_height = self.ct["region_image"].shape[1]
+        region_width = self.ct["region_image"].shape[2]
         ct_box = self.ct["instances"].ct_boxes[self.idx]
 
         if action == 0:  # up
-            ct_box[0] = ct_box[0] - self.c1 * region_height
-            ct_box[2] = ct_box[2] - self.c1 * region_height
+            ct_box[0] = int(ct_box[0] - self.c1 * region_height)
+            ct_box[2] = int(ct_box[2] - self.c1 * region_height)
         elif action == 1:  # down
-            ct_box[0] = ct_box[0] + self.c1 * region_height
-            ct_box[2] = ct_box[2] + self.c1 * region_height
+            ct_box[0] = int(ct_box[0] + self.c1 * region_height)
+            ct_box[2] = int(ct_box[2] + self.c1 * region_height)
         elif action == 2:  # left
-            ct_box[1] = ct_box[1] - self.c1 * region_width
-            ct_box[3] = ct_box[3] - self.c1 * region_width
+            ct_box[1] = int(ct_box[1] - self.c1 * region_width)
+            ct_box[3] = int(ct_box[3] - self.c1 * region_width)
         elif action == 3:  # right
-            ct_box[1] = ct_box[1] + self.c1 * region_width
-            ct_box[3] = ct_box[3] + self.c1 * region_width
+            ct_box[1] = int(ct_box[1] + self.c1 * region_width)
+            ct_box[3] = int(ct_box[3] + self.c1 * region_width)
         elif action == 4:  # wider
-            ct_box[1] = ct_box[1] - self.c2 * region_width
-            ct_box[3] = ct_box[3] + self.c2 * region_width
+            ct_box[1] = int(ct_box[1] - self.c2 * region_width)
+            ct_box[3] = int(ct_box[3] + self.c2 * region_width)
         elif action == 5:  # taller
-            ct_box[0] = ct_box[0] - self.c2 * region_height
-            ct_box[2] = ct_box[2] + self.c2 * region_height
+            ct_box[0] = int(ct_box[0] - self.c2 * region_height)
+            ct_box[2] = int(ct_box[2] + self.c2 * region_height)
         elif action == 6:  # fatter
-            ct_box[0] = ct_box[0] + self.c2 * region_height
-            ct_box[2] = ct_box[2] - self.c2 * region_height
+            ct_box[0] = int(ct_box[0] + self.c2 * region_height)
+            ct_box[2] = int(ct_box[2] - self.c2 * region_height)
         elif action == 7:  # thinner
-            ct_box[1] = ct_box[1] + self.c2 * region_width
-            ct_box[3] = ct_box[3] - self.c2 * region_width
+            ct_box[1] = int(ct_box[1] + self.c2 * region_width)
+            ct_box[3] = int(ct_box[3] - self.c2 * region_width)
 
         # boundaries in case bbox exceeds image size
         ct_box[0] = max(ct_box[0], 0)
@@ -87,7 +94,8 @@ class BAREnv(BBoxEnv):
         iou_next = self._compute_iou()
         if self._check_end_state():
             if iou_next > self.beta:
-                return 6 + 4 * ((self.episode_length - self.t) / self.episode_length)
+                penalty = (self.episode_length - self.t) / self.episode_length
+                return 6 + 4 * penalty
             else:
                 return -3
         else:

@@ -1,6 +1,8 @@
-import numpy as np
-from collections import deque, namedtuple
 from typing import Tuple
+from collections import deque, namedtuple
+
+import torch
+import numpy as np
 
 # Named tuple for storing experience steps gathered in training
 Experience = namedtuple(
@@ -38,9 +40,9 @@ class ReplayBuffer:
         )
 
         return (
-            np.array(states),
-            np.array(actions),
-            np.array(rewards, dtype=np.float32),
-            np.array(dones, dtype=np.bool),
-            np.array(next_states),
+            torch.stack(states),
+            torch.stack(actions),
+            torch.stack(rewards).squeeze(),
+            torch.stack(dones).squeeze(),
+            torch.stack(next_states),
         )

@@ -1,6 +1,7 @@
 train:
-    epochs: 60000
+    epochs: 10000
     batch_size: 16
+    num_workers: 8
     lr: 0.002
     gamma: 0.99
     sync_rate: 10
@@ -11,14 +12,14 @@ train:
 
 data:
     voc:
-        root: "../../../Data/VOC/"
+        root: "../../Data/VOC/"
         year: "2012"
         image_set: "train"
         download: False
     buffer:
         episode_length: 10
         replay_size: 1000
-        warm_start_steps: 10
+        warm_start_steps: 1000
     transforms:
         voc_transforms:
             _target_: sift.data.transforms.voc_transforms
@@ -35,6 +36,7 @@ model:
     backbone:
         _target_: sift.models.backbones.resnet50
     bar:
+        num_actions: 8
         c: 0.1
         beta: 0.9
     sift:

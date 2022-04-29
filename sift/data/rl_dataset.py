@@ -13,12 +13,12 @@ class RLDataset(IterableDataset):
         sample_size: number of experiences to sample at a time
     """
 
-    def __init__(self, buffer: ReplayBuffer, sample_size: int = 200) -> None:
+    def __init__(self, buffer: ReplayBuffer, batch_size: int = 64) -> None:
         self.buffer = buffer
-        self.sample_size = sample_size
+        self.batch_size = batch_size
 
     def __iter__(self) -> Iterator[Tuple]:
-        batch = self.buffer.sample(self.sample_size)
+        batch = self.buffer.sample(self.batch_size)
         states, actions, rewards, dones, new_states = batch
         for i in range(len(dones)):
             yield states[i], actions[i], rewards[i], dones[i], new_states[i]

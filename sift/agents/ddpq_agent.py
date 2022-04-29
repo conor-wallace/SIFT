@@ -1,69 +1,58 @@
-from typing import Tuple
+from typing import List
 
 import numpy as np
 import torch
 import torch.nn as nn
+from torch import Tensor
+from pl_bolts.models.rl.common.agents import Agent
 
-from sift.data.buffer import Experience
-from sift.agents.base_agent import BaseAgent
 
-
-class DDPGAgent(BaseAgent):
-    """DDPG Agent class handeling the interaction with the environment."""
-
-    def get_action(
+class DDPGAgent(Agent):
+    """DDPG based agent that returns an action based on the networks policy."""
+    
+    def __init__(
         self,
         net: nn.Module,
-        device: str,
-        epsilon: float
-    ) -> torch.Tensor:
-        """Using the given network, decide what continuous action to carry out
-        using an epsilon-greedy policy.
+        n_actions: int,
+        action_high: float = 1.0,
+        action_low: float = -1.0,
+        eps: float = 0.1
+    ) -> Agent:
+        self.net = net
+        self.n_actions = n_actions
+        self.action_high = action_high
+        self.action_low = action_low
+        self.eps = eps
 
+    def __call__(self, states: torch.Tensor, device: str) -> List[float]:
+        """Takes in the current state and returns the action based on the agents policy.
         Args:
-            net: Actor network
-            device: current device
-            epsilon: value to determine likelihood of taking a random action
-
+            states: current state of the environment
+            device: the device used for the current batch
         Returns:
-            action
+            action defined by policy perturbed by white Gaussian noise
         """
-        if np.random.random() < epsilon:
-            action = self.env.action_space.sample()
-        else:
-            state = self.state.to(device)
-            action = net(state)
+        if not isinstance(states, Tensor):
+            states = torch.tensor(states, device=device)
 
-        return action
+        mu = self.net(states)
+        noise = self.eps * torch.randn(self.n_actions)
+        actions = (mu + noise).clamp(self.action_low, self.action_high)
 
-    @torch.no_grad()
-    def play_step(
-        self,
-        net: nn.Module,
-        epsilon: float = 0.0,
-        device: str = "cpu",
-    ) -> Tuple[float, bool]:
-        """Carries out a single interaction step between the agent and the environment.
+        return [actions.detach().cpu().numpy()]
 
+    def get_action(self, states: torch.Tensor, device: str) -> List[float]:
+        """Takes in the current state and returns the deterministic action from the agent's policy.
         Args:
-            net: DQN network
-            epsilon: value to determine likelihood of taking a random action
-            device: current device
-
+            states: current state of the environment
+            device: the device used for the current batch
         Returns:
-            reward, done
+            action defined by policy
         """
+        if not isinstance(states, Tensor):
+            states = torch.tensor(states, device=device)
 
-        action = self.get_action(net, epsilon, device)
+        mu = self.net(states)
+        actions = mu.detach().cpu().numpy()
 
-        # do step in the environment
-        new_state, reward, done, _ = self.env.step(action)
-
-        exp = Experience(self.state, action, reward, done, new_state)
-
-        self.replay_buffer.append(exp)
-
-        self.state = new_state
-        if done:
-            self.reset()
-        return reward, done
+        return [actions]

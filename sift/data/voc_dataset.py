@@ -1,4 +1,6 @@
 from typing import Tuple, Dict, Any, Optional, Callable
+import copy
+
 import numpy as np
 import torch
 from torchvision.transforms import PILToTensor
@@ -73,13 +75,15 @@ class VOCCorruptionDataset(_VOCDetection):
             boxes = transformed["bboxes"]
             labels = transformed["class_labels"]
 
+        boxes_c = copy.deepcopy(boxes)
         if self.corruption_transforms is not None:
-            corrupted = self.corruption_transforms(
-                image=image,
-                bboxes=boxes,
-                class_labels=labels
-            )
-            boxes_c = corrupted["bboxes"]
+            for idx in range(len(boxes)):
+                corrupted = self.corruption_transforms(
+                    image=image,
+                    bboxes=boxes,
+                    class_labels=labels
+                )
+                boxes_c[idx] = corrupted["bboxes"][idx]
 
         image = torch.tensor(image).permute(2, 0, 1)
         boxes = torch.tensor(boxes)

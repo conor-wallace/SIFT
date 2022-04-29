@@ -1,9 +1,5 @@
-from sift.learners.base_pl import BaseLightning
-from sift.learners.sift_pl import SIFTLightning
-from sift.learners.bar_pl import BARLightning
+from sift.learners.sift_model import SIFT
 
 __all__ = [
-    "BaseLightning",
-    "SIFTLightning",
-    "BARLightning"
+    "SIFT"
 ]

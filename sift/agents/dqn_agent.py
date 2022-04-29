@@ -11,7 +11,7 @@ from sift.agents.base_agent import BaseAgent
 class DQNAgent(BaseAgent):
     """DQN Agent class handeling the interaction with the environment."""
 
-    def get_action(self, net: nn.Module, device: str, epsilon: float) -> int:
+    def get_action(self, net: nn.Module, epsilon: float, device: str) -> int:
         """Using the given network, decide what action to carry out using an
         epsilon-greedy policy.
 
@@ -29,7 +29,7 @@ class DQNAgent(BaseAgent):
         else:
             state = self.state.to(device)
             q_values = net(state)
-            _, action = torch.max(q_values, dim=1)
+            _, action = torch.max(q_values, dim=-1)
             action = int(action.item())
 
         return action
@@ -38,8 +38,8 @@ class DQNAgent(BaseAgent):
     def play_step(
         self,
         net: nn.Module,
-        device: str = "cpu",
         epsilon: float = 0.0,
+        device: str = "cpu"
     ) -> Tuple[float, bool]:
         """Carries out a single interaction step between the agent and the environment.
 

@@ -25,11 +25,12 @@ def voc_transforms(
 
 
 def corruption_transforms(
-    scale: Optional[float] = 0.3
+    scale: Optional[float] = 0.3,
+    prob: Optional[float] = 0.5
 ) -> A.Compose:
     transforms = A.Compose(
         [
-            A.RandomScale(scale),
+            A.RandomScale(scale_limit=scale, p=prob),
         ],
         bbox_params=A.BboxParams(
             format="pascal_voc",
