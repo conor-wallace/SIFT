@@ -15,7 +15,6 @@ data:
         root: "../../Data/VOC/"
         year: "2012"
         image_set: "train"
-        download: False
     buffer:
         episode_length: 10
         replay_size: 1000
