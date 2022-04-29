@@ -1,5 +1,6 @@
 from typing import Tuple, Dict, Any, Optional, Callable
 import copy
+import os
 
 import numpy as np
 import torch
@@ -45,6 +46,10 @@ class VOCCorruptionDataset(_VOCDetection):
         transforms: Optional[Callable] = None,
         corruption_transforms: Optional[Callable] = None
     ):
+        if os.path.exists(root):
+            download = False
+        else:
+            download = True
         super().__init__(
             root=root,
             year=year,
