@@ -32,5 +32,4 @@ env:
     root: "../../Data/VOC/"
     year: "2012"
     image_set: "train"
-    download: False
     beta: 0.9

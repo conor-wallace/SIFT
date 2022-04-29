@@ -354,7 +354,6 @@ class SIFT(LightningModule):
         root: Optional[str] = None,
         year: Optional[str] = "2012",
         image_set: Optional[str] = "train",
-        download: Optional[bool] = False,
         beta: Optional[float] = 0.9
     ) -> Env:
         """Initialise BAR environment.
@@ -372,7 +371,6 @@ class SIFT(LightningModule):
             root=root,
             year=year,
             image_set=image_set,
-            download=download,
             transforms=voc_transforms,
             corruption_transforms=corruption_transforms
         )

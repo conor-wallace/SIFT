@@ -23,12 +23,7 @@ class BaseLightning(pl.LightningModule):
             episode_length: max length of an episode
             warm_start_steps: max episode reward in the environment
         """
-
-        # Train Params
-        self.batch_size = cfg.train.batch_size
-        self.lr = cfg.train.lr
-        self.gamma = cfg.train.gamma
-        self.sync_rate = cfg.train.sync_rate
+        super().__init__()
         # Greedy Policy Params
         self.eps_start = cfg.train.policy.eps_start
         self.eps_end = cfg.train.policy.eps_end
@@ -38,14 +33,13 @@ class BaseLightning(pl.LightningModule):
         self.total_reward = 0
         self.episode_reward = 0
 
-        self.populate(cfg.data.buffer.warm_start_steps)
-
     def __dataloader(self) -> DataLoader:
         """Initialize the Replay Buffer dataset used for storing experiences"""
-        dataset = RLDataset(self.buffer, self.episode_length)
+        dataset = RLDataset(self.buffer, self.batch_size)
         dataloader = DataLoader(
             dataset=dataset,
             batch_size=self.batch_size,
+            num_workers=self.num_workers
         )
         return dataloader
 
