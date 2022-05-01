@@ -1,10 +1,18 @@
 from typing import Tuple, Optional
 
 import albumentations as A
+from detectron2.utils.registry import Registry
+
+TRANSFORMS_REGISTRY = Registry("TRANSFORMS")
 
 
+def build_transforms(transforms_name: str):
+    return TRANSFORMS_REGISTRY.get(transforms_name)()
+
+
+@TRANSFORMS_REGISTRY.register()
 def voc_transforms(
-    image_size: Tuple[int, int],
+    image_size: Tuple[int, int] = (224, 224),
     hflip: Optional[float] = 0.0,
     vflip: Optional[float] = 0.0,
     brightness_contrast: Optional[float] = 0.0,
@@ -24,7 +32,8 @@ def voc_transforms(
     return transforms
 
 
-def corruption_transforms(
+@TRANSFORMS_REGISTRY.register()
+def voc_corruption_transforms(
     scale: Optional[float] = 0.3,
     prob: Optional[float] = 0.5
 ) -> A.Compose:
