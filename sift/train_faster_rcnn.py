@@ -39,7 +39,7 @@ class Trainer(DefaultTrainer):
         datamodule = VOCCorruptionDataModule(
             root=cfg.voc.root,
             year=cfg.voc.year,
-            batch_size=1,
+            batch_size=cfg.SOLVER.IMS_PER_BATCH,
             transforms=build_transforms(cfg.voc.transforms),
             corruption_transforms=build_transforms(cfg.voc.corruption_transforms)
         )
