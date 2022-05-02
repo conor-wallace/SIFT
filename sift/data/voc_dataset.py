@@ -194,10 +194,10 @@ class VOCCorruptionDataModule(pl.LightningDataModule):
             )
 
     def train_dataloader(self) -> DataLoader:
+        print("BATCH_SIZE = ", self.batch_size)
+        print("DATASET LEN = ", len(self.train_dataset))
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
-            drop_last=True,
             collate_fn=detectron2_collate_fn,
         )
