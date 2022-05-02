@@ -1,4 +1,10 @@
+<div align="center">
+
+<img src="docs/images/SIFT Logo V2.png" width="400px">
+
 # SIFT: Reinforcement Learning for Search and Inspection of Trustworthy Image Data
+
+<div align="left">
 
 ## Note:
 This codebase accompanies the paper "SIFT: A Reinforcement Learning Agent for Search and Inspection of Trustworthy Image Data".
