@@ -3,19 +3,33 @@
 ## Note:
 This codebase accompanies the paper "SIFT: A Reinforcement Learning Agent for Search and Inspection of Trustworthy Image Data".
 
+# Progress
+Status  | Feature
+------------- | -------------
+![todo badge](https://img.shields.io/badge/status-TODO-brightgreen) | Faster-RCNN Experiments
+![todo badge](https://img.shields.io/badge/status-TODO-brightgreen) | BAR Experiments 
+
 ## Installation
 Simple.
 
-\textcolor{red}{NOTE: I still need to publish to PyPi}
-```pip install sift```
+![todo badge](https://img.shields.io/badge/status-TODO-brightgreen)
+```
+pip install sift
+```
 
 ## Run an Experiment
+
+![todo badge](https://img.shields.io/badge/status-TODO-brightgreen)
 ```
 command for running an experiment
 ```
 
 ## Saving and Loading Trained Policies
-\textcolor{red}{TODO: add details for saving and loading trained policies}
+
+![todo badge](https://img.shields.io/badge/status-TODO-brightgreen) 
+```python
+policy = sift.build_policy({SIFT, BAR})
+```
 
 ## Styling/Testing
 This project uses `black`, `isort`, `flake8`, `pydocstyle`, and `pytest` to keep code clean, readable, and usable. Their configurations can be found in pyproject.toml and .flake8. After making your changes, run the following and correct any issues.
