@@ -27,14 +27,15 @@ pip install sift
 
 ![todo badge](https://img.shields.io/badge/status-TODO-brightgreen)
 ```
-command for running an experiment
+python train.py --exp SIFT --cfg sift/conf/sift_config.yaml
 ```
 
 ## Saving and Loading Trained Policies
 
 ![todo badge](https://img.shields.io/badge/status-TODO-brightgreen) 
 ```python
-policy = sift.build_policy({SIFT, BAR})
+from sift import build_policy
+policy = build_policy({SIFT, BAR})
 ```
 
 ## Styling/Testing
