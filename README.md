@@ -2,12 +2,12 @@
 
 <img src="docs/images/SIFT Logo V2.png" width="400px">
 
-# SIFT: Reinforcement Learning for Search and Inspection of Trustworthy Image Data
+# SIFT: Search and Inspection for Trustworthiness in Image Annotations
 
 <div align="left">
 
 ## Note:
-This codebase accompanies the paper "SIFT: A Reinforcement Learning Agent for Search and Inspection of Trustworthy Image Data".
+This codebase accompanies the paper "SIFT: Search and Inspection for Trustworthiness in Image Annotations".
 
 # Progress
 Status  | Feature
